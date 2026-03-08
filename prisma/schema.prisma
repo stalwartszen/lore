@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Repository {
+  id          String   @id @default(cuid())
+  name        String
+  path        String   @unique
+  description String?
+  branch      String   @default("main")
+  isIndexing  Boolean  @default(false)
+  lastIndexed DateTime?
+  totalCommits Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  commits     Commit[]
+  indexJobs   IndexJob[]
+
+  @@map("repositories")
+}
+
+model Commit {
+  id           String     @id @default(cuid())
+  hash         String
+  shortHash    String
+  message      String     @db.Text
+  body         String     @db.Text
+  author       String
+  email        String
+  date         DateTime
+  timestamp    Int
+  files        Json       // string[]
+  diff         String     @db.MediumText
+  additions    Int        @default(0)
+  deletions    Int        @default(0)
+  embedding    Json       // number[] — 384 floats
+
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime   @default(now())
+
+  @@unique([repositoryId, hash])
+  @@index([repositoryId])
+  @@index([author])
+  @@index([timestamp])
+  @@map("commits")
+}
+
+model IndexJob {
+  id           String     @id @default(cuid())
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  status       IndexJobStatus @default(PENDING)
+  totalCommits Int        @default(0)
+  indexedCommits Int      @default(0)
+  errorMessage String?    @db.Text
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime   @default(now())
+
+  @@map("index_jobs")
+}
+
+enum IndexJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model SearchLog {
+  id           String   @id @default(cuid())
+  query        String   @db.Text
+  repositoryId String?
+  resultCount  Int
+  durationMs   Int
+  provider     String?  // 'groq' | 'claude' | 'embedding-only'
+  createdAt    DateTime @default(now())
+
+  @@map("search_logs")
+}

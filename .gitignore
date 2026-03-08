@@ -1,0 +1,25 @@
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+.env
+.env.local
+.lore/
+*.db
+*.db-shm
+*.db-wal
+
+# Build outputs
+packages/*/dist/
+apps/*/dist/
+apps/web/.vite/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
